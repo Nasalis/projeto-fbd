@@ -1,0 +1,721 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 13.4
+-- Dumped by pg_dump version 13.4
+
+-- Started on 2022-02-07 15:20:00
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 3066 (class 1262 OID 24842)
+-- Name: shows-rock; Type: DATABASE; Schema: -; Owner: postgres
+--
+
+CREATE DATABASE "shows-rock" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'Portuguese_Brazil.1252';
+
+
+ALTER DATABASE "shows-rock" OWNER TO postgres;
+
+\connect -reuse-previous=on "dbname='shows-rock'"
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- TOC entry 216 (class 1255 OID 25228)
+-- Name: consulta_ingressos_fnc(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.consulta_ingressos_fnc() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+	BEGIN
+		REFRESH MATERIALIZED VIEW ingressos;
+		RETURN NEW;
+	END;
+$$;
+
+
+ALTER FUNCTION public.consulta_ingressos_fnc() OWNER TO postgres;
+
+--
+-- TOC entry 215 (class 1255 OID 25025)
+-- Name: decrementa_ingresso_fnc(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.decrementa_ingresso_fnc() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+	BEGIN
+		UPDATE evento
+		SET ingressos_vendidos = ingressos_vendidos - 1
+		WHERE NEW.id_evento = evento.id AND NEW.cancelado = true;
+		RETURN NEW;
+	END;
+$$;
+
+
+ALTER FUNCTION public.decrementa_ingresso_fnc() OWNER TO postgres;
+
+--
+-- TOC entry 214 (class 1255 OID 25023)
+-- Name: incrementa_ingresso_fnc(); Type: FUNCTION; Schema: public; Owner: postgres
+--
+
+CREATE FUNCTION public.incrementa_ingresso_fnc() RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+	BEGIN
+		UPDATE evento
+		SET ingressos_vendidos = ingressos_vendidos + 1
+		WHERE NEW.id_evento = evento.id;
+		RETURN NEW;
+	END;
+$$;
+
+
+ALTER FUNCTION public.incrementa_ingresso_fnc() OWNER TO postgres;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- TOC entry 204 (class 1259 OID 24967)
+-- Name: apresenta; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.apresenta (
+    id_banda integer,
+    id_evento integer,
+    id integer NOT NULL
+);
+
+
+ALTER TABLE public.apresenta OWNER TO postgres;
+
+--
+-- TOC entry 205 (class 1259 OID 25039)
+-- Name: apresenta_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.apresenta_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.apresenta_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3067 (class 0 OID 0)
+-- Dependencies: 205
+-- Name: apresenta_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.apresenta_id_seq OWNED BY public.apresenta.id;
+
+
+--
+-- TOC entry 201 (class 1259 OID 24937)
+-- Name: banda; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.banda (
+    nome character varying(50) NOT NULL,
+    email character varying(50) NOT NULL,
+    senha character varying(256) NOT NULL,
+    genero character varying(15) NOT NULL,
+    id integer NOT NULL
+);
+
+
+ALTER TABLE public.banda OWNER TO postgres;
+
+--
+-- TOC entry 206 (class 1259 OID 25111)
+-- Name: banda_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.banda_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.banda_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3068 (class 0 OID 0)
+-- Dependencies: 206
+-- Name: banda_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.banda_id_seq OWNED BY public.banda.id;
+
+
+--
+-- TOC entry 200 (class 1259 OID 24930)
+-- Name: cliente; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.cliente (
+    nome character varying(50) NOT NULL,
+    email character varying(50) NOT NULL,
+    senha character varying(256) NOT NULL,
+    cpf character varying(11) NOT NULL,
+    id integer NOT NULL
+);
+
+
+ALTER TABLE public.cliente OWNER TO postgres;
+
+--
+-- TOC entry 207 (class 1259 OID 25120)
+-- Name: cliente_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.cliente_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.cliente_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3069 (class 0 OID 0)
+-- Dependencies: 207
+-- Name: cliente_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.cliente_id_seq OWNED BY public.cliente.id;
+
+
+--
+-- TOC entry 203 (class 1259 OID 24949)
+-- Name: evento; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.evento (
+    nome character varying(50) NOT NULL,
+    data date NOT NULL,
+    horario time without time zone NOT NULL,
+    qtd_ingressos integer NOT NULL,
+    id_local integer NOT NULL,
+    ingressos_vendidos integer NOT NULL,
+    id integer NOT NULL
+);
+
+
+ALTER TABLE public.evento OWNER TO postgres;
+
+--
+-- TOC entry 208 (class 1259 OID 25129)
+-- Name: evento_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.evento_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.evento_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3070 (class 0 OID 0)
+-- Dependencies: 208
+-- Name: evento_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.evento_id_seq OWNED BY public.evento.id;
+
+
+--
+-- TOC entry 212 (class 1259 OID 25186)
+-- Name: venda; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.venda (
+    id integer NOT NULL,
+    id_show integer NOT NULL,
+    id_cliente integer NOT NULL,
+    cancelado boolean NOT NULL,
+    estornado boolean NOT NULL
+);
+
+
+ALTER TABLE public.venda OWNER TO postgres;
+
+--
+-- TOC entry 213 (class 1259 OID 25207)
+-- Name: ingressos; Type: MATERIALIZED VIEW; Schema: public; Owner: postgres
+--
+
+CREATE MATERIALIZED VIEW public.ingressos AS
+ SELECT cliente.nome AS cliente,
+    banda.nome AS banda,
+    evento.nome AS evento,
+    evento.data,
+    evento.horario,
+    venda.cancelado,
+    venda.estornado
+   FROM ((((public.venda
+     JOIN public.cliente ON ((cliente.id = venda.id_cliente)))
+     JOIN public.apresenta ON ((apresenta.id = venda.id_show)))
+     JOIN public.evento ON ((evento.id = apresenta.id_evento)))
+     JOIN public.banda ON ((banda.id = apresenta.id_banda)))
+  WITH NO DATA;
+
+
+ALTER TABLE public.ingressos OWNER TO postgres;
+
+--
+-- TOC entry 202 (class 1259 OID 24944)
+-- Name: local_show; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public.local_show (
+    cidade character varying(50) NOT NULL,
+    bairro character varying(50) NOT NULL,
+    rua character varying(50) NOT NULL,
+    cep character varying(20) NOT NULL,
+    numero character varying(10),
+    id integer NOT NULL
+);
+
+
+ALTER TABLE public.local_show OWNER TO postgres;
+
+--
+-- TOC entry 209 (class 1259 OID 25137)
+-- Name: local_show_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.local_show_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.local_show_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3071 (class 0 OID 0)
+-- Dependencies: 209
+-- Name: local_show_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.local_show_id_seq OWNED BY public.local_show.id;
+
+
+--
+-- TOC entry 210 (class 1259 OID 25146)
+-- Name: show; Type: VIEW; Schema: public; Owner: postgres
+--
+
+CREATE VIEW public.show AS
+ SELECT banda.nome AS banda,
+    banda.genero,
+    evento.nome AS evento,
+    evento.data,
+    evento.horario,
+    evento.qtd_ingressos,
+    local_show.cidade,
+    local_show.bairro,
+    local_show.rua,
+    local_show.cep,
+    local_show.numero
+   FROM (((public.apresenta
+     JOIN public.banda ON ((banda.id = apresenta.id_banda)))
+     JOIN public.evento ON ((evento.id = apresenta.id_evento)))
+     LEFT JOIN public.local_show ON ((local_show.id = evento.id_local)));
+
+
+ALTER TABLE public.show OWNER TO postgres;
+
+--
+-- TOC entry 211 (class 1259 OID 25184)
+-- Name: venda_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
+--
+
+CREATE SEQUENCE public.venda_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.venda_id_seq OWNER TO postgres;
+
+--
+-- TOC entry 3072 (class 0 OID 0)
+-- Dependencies: 211
+-- Name: venda_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
+--
+
+ALTER SEQUENCE public.venda_id_seq OWNED BY public.venda.id;
+
+
+--
+-- TOC entry 2895 (class 2604 OID 25041)
+-- Name: apresenta id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.apresenta ALTER COLUMN id SET DEFAULT nextval('public.apresenta_id_seq'::regclass);
+
+
+--
+-- TOC entry 2892 (class 2604 OID 25113)
+-- Name: banda id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.banda ALTER COLUMN id SET DEFAULT nextval('public.banda_id_seq'::regclass);
+
+
+--
+-- TOC entry 2891 (class 2604 OID 25122)
+-- Name: cliente id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.cliente ALTER COLUMN id SET DEFAULT nextval('public.cliente_id_seq'::regclass);
+
+
+--
+-- TOC entry 2894 (class 2604 OID 25131)
+-- Name: evento id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.evento ALTER COLUMN id SET DEFAULT nextval('public.evento_id_seq'::regclass);
+
+
+--
+-- TOC entry 2893 (class 2604 OID 25139)
+-- Name: local_show id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.local_show ALTER COLUMN id SET DEFAULT nextval('public.local_show_id_seq'::regclass);
+
+
+--
+-- TOC entry 2896 (class 2604 OID 25189)
+-- Name: venda id; Type: DEFAULT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.venda ALTER COLUMN id SET DEFAULT nextval('public.venda_id_seq'::regclass);
+
+
+--
+-- TOC entry 3052 (class 0 OID 24967)
+-- Dependencies: 204
+-- Data for Name: apresenta; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.apresenta (id_banda, id_evento, id) VALUES (7, 8, 1);
+INSERT INTO public.apresenta (id_banda, id_evento, id) VALUES (5, 5, 2);
+INSERT INTO public.apresenta (id_banda, id_evento, id) VALUES (1, 7, 3);
+INSERT INTO public.apresenta (id_banda, id_evento, id) VALUES (10, 2, 4);
+INSERT INTO public.apresenta (id_banda, id_evento, id) VALUES (4, 3, 5);
+INSERT INTO public.apresenta (id_banda, id_evento, id) VALUES (3, 2, 6);
+INSERT INTO public.apresenta (id_banda, id_evento, id) VALUES (6, 1, 7);
+INSERT INTO public.apresenta (id_banda, id_evento, id) VALUES (2, 4, 8);
+INSERT INTO public.apresenta (id_banda, id_evento, id) VALUES (8, 8, 9);
+INSERT INTO public.apresenta (id_banda, id_evento, id) VALUES (4, 6, 10);
+
+
+--
+-- TOC entry 3049 (class 0 OID 24937)
+-- Dependencies: 201
+-- Data for Name: banda; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.banda (nome, email, senha, genero, id) VALUES ('Sabaton', 'sabaton-official@email.com', 'sabaton-bismark', 'power metal', 1);
+INSERT INTO public.banda (nome, email, senha, genero, id) VALUES ('Paramore', 'paramore-official@email.com', 'ignorancethecode', 'alternativo', 2);
+INSERT INTO public.banda (nome, email, senha, genero, id) VALUES ('Dragon Force', 'dragonforce-official@email.com', 'throughtheflames-tztopper', 'power metal', 3);
+INSERT INTO public.banda (nome, email, senha, genero, id) VALUES ('The Hu', 'thehu-official@email.com', 'huarewe-sadbuttrue', 'folk', 4);
+INSERT INTO public.banda (nome, email, senha, genero, id) VALUES ('Rammstein', 'rammstein-official@email.com', 'duriechstsogut94', 'industrial', 5);
+INSERT INTO public.banda (nome, email, senha, genero, id) VALUES ('Disturbed', 'disturberd-official@email.com', 'sickness-disturbed', 'heavy metal', 6);
+INSERT INTO public.banda (nome, email, senha, genero, id) VALUES ('Metallica', 'metallica-official@email.com', 'killemall83', 'heavy metal', 7);
+INSERT INTO public.banda (nome, email, senha, genero, id) VALUES ('Iron Maiden', 'ironmaiden-official@email.com', 'callofcthulhu', 'heavy metal', 8);
+INSERT INTO public.banda (nome, email, senha, genero, id) VALUES ('A Day to Remember', 'adaytoremember-official@email.com', 'forthoseshowhaveheart', 'alternativo', 9);
+INSERT INTO public.banda (nome, email, senha, genero, id) VALUES ('Pearl Jam', 'pearljam-official@email.com', 'lightningbolt', 'grunge', 10);
+
+
+--
+-- TOC entry 3048 (class 0 OID 24930)
+-- Dependencies: 200
+-- Data for Name: cliente; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.cliente (nome, email, senha, cpf, id) VALUES ('Guthyerri', 'guthyerrialex@email.com', 'guthyerri123', '42352363421', 1);
+INSERT INTO public.cliente (nome, email, senha, cpf, id) VALUES ('Davi', 'davisf@email.com', 'davi423', '14263480212', 2);
+INSERT INTO public.cliente (nome, email, senha, cpf, id) VALUES ('Rafaela', 'rafatrajano@email.com', 'trajandoplano', '92174202167', 3);
+INSERT INTO public.cliente (nome, email, senha, cpf, id) VALUES ('Gabriely', 'gabriely_gabi@email.com', 'gabi452oli', '29361285064', 4);
+INSERT INTO public.cliente (nome, email, senha, cpf, id) VALUES ('Isaias', 'isazstoledo@email.com', 'matrix_neo512', '02373498902', 5);
+INSERT INTO public.cliente (nome, email, senha, cpf, id) VALUES ('Beatriz', 'goiabia@email.com', 'beatrix_goiabia', '76521356352', 6);
+INSERT INTO public.cliente (nome, email, senha, cpf, id) VALUES ('Lucas', 'lucas_macedox@email.com', 'macedo_ld521[]', '15975368458', 7);
+INSERT INTO public.cliente (nome, email, senha, cpf, id) VALUES ('Adriano', 'oliveiraandrias@email.com', 'alestoraandriax', '86528940283', 8);
+INSERT INTO public.cliente (nome, email, senha, cpf, id) VALUES ('Emily', 'emilyefanygwe@email.com', 'davi423', '02516848269', 9);
+INSERT INTO public.cliente (nome, email, senha, cpf, id) VALUES ('Jurandir', 'jurandosegredo@email.com', 'jurasqueparque', '45872619380', 10);
+
+
+--
+-- TOC entry 3051 (class 0 OID 24949)
+-- Dependencies: 203
+-- Data for Name: evento; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.evento (nome, data, horario, qtd_ingressos, id_local, ingressos_vendidos, id) VALUES ('Steamskull', '2024-05-10', '16:00:00', 6015, 6, 3075, 1);
+INSERT INTO public.evento (nome, data, horario, qtd_ingressos, id_local, ingressos_vendidos, id) VALUES ('Meromor', '2022-04-30', '21:20:00', 3212, 7, 742, 2);
+INSERT INTO public.evento (nome, data, horario, qtd_ingressos, id_local, ingressos_vendidos, id) VALUES ('Lolo', '2023-05-10', '21:20:00', 10000, 2, 2522, 3);
+INSERT INTO public.evento (nome, data, horario, qtd_ingressos, id_local, ingressos_vendidos, id) VALUES ('Louki', '2022-04-28', '19:00:00', 1000, 1, 354, 4);
+INSERT INTO public.evento (nome, data, horario, qtd_ingressos, id_local, ingressos_vendidos, id) VALUES ('Wave', '2022-07-03', '20:30:00', 2000, 4, 796, 5);
+INSERT INTO public.evento (nome, data, horario, qtd_ingressos, id_local, ingressos_vendidos, id) VALUES ('Sepulkro', '2023-01-01', '00:00:00', 30000, 5, 12543, 6);
+INSERT INTO public.evento (nome, data, horario, qtd_ingressos, id_local, ingressos_vendidos, id) VALUES ('Fortal 2019', '2022-06-12', '20:00:00', 2000, 3, 947, 7);
+INSERT INTO public.evento (nome, data, horario, qtd_ingressos, id_local, ingressos_vendidos, id) VALUES ('Konquest', '2024-11-02', '20:00:00', 40500, 10, 23623, 8);
+INSERT INTO public.evento (nome, data, horario, qtd_ingressos, id_local, ingressos_vendidos, id) VALUES ('Alkaceil', '2022-06-16', '19:30:00', 4022, 9, 976, 9);
+INSERT INTO public.evento (nome, data, horario, qtd_ingressos, id_local, ingressos_vendidos, id) VALUES ('Steinbroke', '2023-03-12', '17:30:00', 5240, 8, 2518, 10);
+
+
+--
+-- TOC entry 3050 (class 0 OID 24944)
+-- Dependencies: 202
+-- Data for Name: local_show; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.local_show (cidade, bairro, rua, cep, numero, id) VALUES ('São Paulo', 'Swiss Park', 'Rua 130', '62234021', '232', 1);
+INSERT INTO public.local_show (cidade, bairro, rua, cep, numero, id) VALUES ('Osasco', 'São Vicente', 'Rua 232', '61424051', '4212', 2);
+INSERT INTO public.local_show (cidade, bairro, rua, cep, numero, id) VALUES ('Rio de Janeiro', 'Tijuca', 'Rua 425', '65132052', '652', 3);
+INSERT INTO public.local_show (cidade, bairro, rua, cep, numero, id) VALUES ('Fortaleza', 'Bom Jardim', 'Rua 521', '6512502', '823', 4);
+INSERT INTO public.local_show (cidade, bairro, rua, cep, numero, id) VALUES ('Fortaleza', 'Panamericano', 'Rua 942', '68914201', '1324', 5);
+INSERT INTO public.local_show (cidade, bairro, rua, cep, numero, id) VALUES ('Brasília', 'Asa Norte', 'Rua 520', '63905321', '8202', 6);
+INSERT INTO public.local_show (cidade, bairro, rua, cep, numero, id) VALUES ('Santos', 'Embaré', 'Rua 1512', '60322072', '7123', 7);
+INSERT INTO public.local_show (cidade, bairro, rua, cep, numero, id) VALUES ('Salvador', 'Caminho das Árvores', 'Rua 4232', '52623021', '10223', 8);
+INSERT INTO public.local_show (cidade, bairro, rua, cep, numero, id) VALUES ('Porto Alegre', 'Aberta dos Morros', 'Rua 923', '74232823', '64242', 9);
+INSERT INTO public.local_show (cidade, bairro, rua, cep, numero, id) VALUES ('São Paulo', 'Ponte Preta', 'Rua 512', '62234042', '82312', 10);
+
+
+--
+-- TOC entry 3059 (class 0 OID 25186)
+-- Dependencies: 212
+-- Data for Name: venda; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+INSERT INTO public.venda (id, id_show, id_cliente, cancelado, estornado) VALUES (1, 3, 2, false, false);
+INSERT INTO public.venda (id, id_show, id_cliente, cancelado, estornado) VALUES (2, 6, 3, false, false);
+INSERT INTO public.venda (id, id_show, id_cliente, cancelado, estornado) VALUES (3, 4, 5, false, false);
+INSERT INTO public.venda (id, id_show, id_cliente, cancelado, estornado) VALUES (4, 2, 8, false, false);
+INSERT INTO public.venda (id, id_show, id_cliente, cancelado, estornado) VALUES (5, 5, 1, false, false);
+INSERT INTO public.venda (id, id_show, id_cliente, cancelado, estornado) VALUES (6, 2, 4, false, false);
+INSERT INTO public.venda (id, id_show, id_cliente, cancelado, estornado) VALUES (7, 8, 7, false, false);
+INSERT INTO public.venda (id, id_show, id_cliente, cancelado, estornado) VALUES (8, 8, 9, false, false);
+INSERT INTO public.venda (id, id_show, id_cliente, cancelado, estornado) VALUES (9, 10, 10, false, false);
+INSERT INTO public.venda (id, id_show, id_cliente, cancelado, estornado) VALUES (10, 6, 6, false, false);
+INSERT INTO public.venda (id, id_show, id_cliente, cancelado, estornado) VALUES (11, 6, 4, false, false);
+
+
+--
+-- TOC entry 3073 (class 0 OID 0)
+-- Dependencies: 205
+-- Name: apresenta_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.apresenta_id_seq', 10, true);
+
+
+--
+-- TOC entry 3074 (class 0 OID 0)
+-- Dependencies: 206
+-- Name: banda_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.banda_id_seq', 10, true);
+
+
+--
+-- TOC entry 3075 (class 0 OID 0)
+-- Dependencies: 207
+-- Name: cliente_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.cliente_id_seq', 10, true);
+
+
+--
+-- TOC entry 3076 (class 0 OID 0)
+-- Dependencies: 208
+-- Name: evento_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.evento_id_seq', 10, true);
+
+
+--
+-- TOC entry 3077 (class 0 OID 0)
+-- Dependencies: 209
+-- Name: local_show_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.local_show_id_seq', 10, true);
+
+
+--
+-- TOC entry 3078 (class 0 OID 0)
+-- Dependencies: 211
+-- Name: venda_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.venda_id_seq', 11, true);
+
+
+--
+-- TOC entry 2910 (class 2606 OID 25046)
+-- Name: apresenta apresenta_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.apresenta
+    ADD CONSTRAINT apresenta_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2902 (class 2606 OID 24943)
+-- Name: banda banda_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.banda
+    ADD CONSTRAINT banda_email_key UNIQUE (email);
+
+
+--
+-- TOC entry 2904 (class 2606 OID 25119)
+-- Name: banda banda_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.banda
+    ADD CONSTRAINT banda_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2898 (class 2606 OID 24936)
+-- Name: cliente cliente_email_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.cliente
+    ADD CONSTRAINT cliente_email_key UNIQUE (email);
+
+
+--
+-- TOC entry 2900 (class 2606 OID 25128)
+-- Name: cliente cliente_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.cliente
+    ADD CONSTRAINT cliente_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2908 (class 2606 OID 25136)
+-- Name: evento evento_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.evento
+    ADD CONSTRAINT evento_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2906 (class 2606 OID 25144)
+-- Name: local_show local_show_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.local_show
+    ADD CONSTRAINT local_show_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2912 (class 2606 OID 25191)
+-- Name: venda venda_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.venda
+    ADD CONSTRAINT venda_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 2915 (class 2620 OID 25229)
+-- Name: venda consulta_ingressos; Type: TRIGGER; Schema: public; Owner: postgres
+--
+
+CREATE TRIGGER consulta_ingressos AFTER INSERT ON public.venda FOR EACH STATEMENT EXECUTE FUNCTION public.consulta_ingressos_fnc();
+
+
+--
+-- TOC entry 2914 (class 2606 OID 25197)
+-- Name: venda venda_id_cliente_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.venda
+    ADD CONSTRAINT venda_id_cliente_fkey FOREIGN KEY (id_cliente) REFERENCES public.cliente(id);
+
+
+--
+-- TOC entry 2913 (class 2606 OID 25192)
+-- Name: venda venda_id_show_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.venda
+    ADD CONSTRAINT venda_id_show_fkey FOREIGN KEY (id_show) REFERENCES public.apresenta(id);
+
+
+--
+-- TOC entry 3060 (class 0 OID 25207)
+-- Dependencies: 213 3062
+-- Name: ingressos; Type: MATERIALIZED VIEW DATA; Schema: public; Owner: postgres
+--
+
+REFRESH MATERIALIZED VIEW public.ingressos;
+
+
+-- Completed on 2022-02-07 15:20:02
+
+--
+-- PostgreSQL database dump complete
+--
+
